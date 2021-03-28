@@ -7,7 +7,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "website")
+@Table(name = "website", indexes = @Index(name = "website_user_id_idx", columnList = "user_id"))
 @Data
 public class Website {
 

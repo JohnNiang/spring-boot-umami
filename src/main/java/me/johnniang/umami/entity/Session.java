@@ -47,7 +47,7 @@ public class Session {
     private LocalDateTime createdAt;
 
     @ManyToOne(cascade = CascadeType.REMOVE)
-    @JoinColumn(name = "website_id")
+    @JoinColumn(name = "website_id", nullable = false)
     private Website website;
 
 }
