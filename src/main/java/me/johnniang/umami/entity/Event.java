@@ -12,7 +12,11 @@ import java.time.LocalDateTime;
  * @author johnniang
  */
 @Entity
-@Table(name = "event")
+@Table(name = "event", indexes = {
+        @Index(name = "event_created_at_idx", columnList = "created_at"),
+        @Index(name = "event_website_id_idx", columnList = "website_id"),
+        @Index(name = "event_session_id_idx", columnList = "session_id")
+})
 @Data
 public class Event {
 
