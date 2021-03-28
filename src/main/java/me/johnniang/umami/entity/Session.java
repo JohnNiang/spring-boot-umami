@@ -8,7 +8,10 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "session")
+@Table(name = "session", indexes = {
+        @Index(name = "session_created_at_idx", columnList = "created_at"),
+        @Index(name = "session_website_id_idx", columnList = "website_id")
+})
 @Data
 public class Session {
 
