@@ -7,7 +7,13 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "page_view")
+@Table(name = "page_view", indexes = {
+        @Index(name = "pageview_created_at_idx", columnList = "created_at"),
+        @Index(name = "pageview_website_id_idx", columnList = "website_id"),
+        @Index(name = "pageview_session_id_idx", columnList = "session_id"),
+        @Index(name = "pageview_website_id_created_at_idx", columnList = "website_id, created_at"),
+        @Index(name = "pageview_website_id_session_id_created_at_idx", columnList = "website_id, session_id, created_at")
+})
 @Data
 public class PageView {
 
