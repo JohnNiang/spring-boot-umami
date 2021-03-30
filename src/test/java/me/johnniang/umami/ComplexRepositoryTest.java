@@ -32,22 +32,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class ComplexRepositoryTest {
 
     @Autowired
-    EntityManager entityManager;
-
-    @Autowired
-    Session session;
-
-    @Autowired
-    AccountRepository accountRepository;
-
-    @Autowired
     ComplexRepository complexRepository;
 
     @org.junit.jupiter.api.Test
     void contextLoad() {
-        assertNotNull(accountRepository);
         assertNotNull(complexRepository);
-        assertNotNull(session);
     }
 
     @org.junit.jupiter.api.Test
