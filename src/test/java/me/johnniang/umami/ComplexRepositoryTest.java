@@ -1,6 +1,7 @@
 package me.johnniang.umami;
 
 import lombok.extern.slf4j.Slf4j;
+import me.johnniang.umami.entity.PageView;
 import me.johnniang.umami.entity.Website;
 import me.johnniang.umami.repository.ComplexRepository;
 import me.johnniang.umami.repository.ComplexRepository.Metrics;
@@ -11,6 +12,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
+import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,6 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ActiveProfiles("test")
 @Import({ComplexRepositoryImpl.class})
 class ComplexRepositoryTest {
+
+    @Autowired
+    EntityManager entityManager;
 
     @Autowired
     ComplexRepository complexRepository;
@@ -93,5 +99,29 @@ class ComplexRepositoryTest {
 //                Metrics.of("http://localhost:8090/search?keyword=a", 1L),
 //                Metrics.of("http://localhost:8090/search?keyword=b", 1L)
 //        ), metrics);
+    }
+
+    @Test
+    void getMetricsQuery() {
+        Website website = new Website();
+        website.setId(1);
+        LocalDateTime startAt = LocalDateTime.of(2021, 3, 28, 0, 0, 0);
+        LocalDateTime endAt = startAt.plusDays(3);
+
+        List<Metrics> metrics = complexRepository.getPageMetrics(website, startAt, endAt, PageView.class, "url", null);
+        List<Metrics> expectedMetrics = List.of(Metrics.of("/", 9L),
+                Metrics.of("/categories/default", 5L),
+                Metrics.of("/s/about", 5L),
+                Metrics.of("/archives/hello-halo", 4L),
+                Metrics.of("/archives", 3L),
+                Metrics.of("/search?keyword=a", 1L),
+                Metrics.of("/search?keyword=b", 1L));
+        assertEquals(expectedMetrics, metrics);
+    }
+
+    @Test
+    void criteriaBuilderTest() {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
     }
 }

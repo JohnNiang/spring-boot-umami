@@ -4,9 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import me.johnniang.umami.entity.Website;
 
-import java.time.LocalDate;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +30,14 @@ public interface ComplexRepository {
 
     default List<Metrics> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
         throw new UnsupportedOperationException("Not implement");
+    }
+
+    default List<Metrics> getPageMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, Class<?> entityClass, String field, Map<String, Object> filter) {
+        throw new UnsupportedOperationException("Not implement");
+    }
+
+    interface QueryFilter {
+        Predicate build(Root<?> root, CriteriaBuilder cb);
     }
 
     /**
