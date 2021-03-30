@@ -72,7 +72,7 @@ public interface ComplexRepository {
     class PageViewStats {
 
         @JsonProperty("t")
-        private LocalDate createdAt;
+        private LocalDateTime createdAt;
 
         @JsonProperty("y")
         private Long pageViews;

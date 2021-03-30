@@ -76,15 +76,19 @@ public class H2ComplexRepositoryImpl implements ComplexRepository {
         if (!StringUtils.hasText(countColumns)) {
             countColumns = "*";
         }
-        List<?> stats = entityManager.createNativeQuery("" +
-                "select " + getDateQuery("created_at", unit, tz) + " as t,\n" +
-                "   count(" + countColumns + ") as y\n" +
-                "from pageview\n" +
-                "where website_id = :websiteId\n" +
-                "   and created_at between :lowerTimeLimit and :upperTimeLimit\n" +
-                "   group by t\n" +
-                "   order by t\n" +
-                "\n")
+        StringBuilder nativeSql = new StringBuilder().append("")
+                .append("select ").append(getDateQuery("created_at", unit, tz)).append(" as t,\n")
+                .append("   count(").append(countColumns).append(") as y\n")
+                .append("from pageview\n")
+                .append("where website_id = :websiteId\n")
+                .append("   and created_at between :lowerTimeLimit and :upperTimeLimit");
+        if (StringUtils.hasText(url)) {
+            nativeSql.append(" and url='").append(url).append('\'');
+        }
+        nativeSql.append('\n');
+        nativeSql.append("group by t\n")
+                .append("order by t\n").append("\n");
+        List<?> stats = entityManager.createNativeQuery(nativeSql.toString())
                 .setParameter("websiteId", website.getId())
                 .setParameter("lowerTimeLimit", startAt)
                 .setParameter("upperTimeLimit", endAt)
@@ -93,7 +97,7 @@ public class H2ComplexRepositoryImpl implements ComplexRepository {
         return stats.stream().map(stat -> {
             Object[] statArr = (Object[]) stat;
             PageViewStats pageViewStats = new PageViewStats();
-            pageViewStats.setCreatedAt(LocalDateTime.parse(statArr[0].toString(), DATE_TIME_FORMATTER).toLocalDate());
+            pageViewStats.setCreatedAt(LocalDateTime.parse(statArr[0].toString(), DATE_TIME_FORMATTER));
             pageViewStats.setPageViews(((Number) statArr[1]).longValue());
             return pageViewStats;
         }).collect(Collectors.toList());
