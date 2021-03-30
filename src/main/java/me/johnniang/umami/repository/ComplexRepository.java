@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import me.johnniang.umami.entity.Website;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Complex repository.
@@ -15,12 +18,13 @@ public interface ComplexRepository {
 
     WebsiteStats getWebsiteStats(Website website, LocalDateTime startAt, LocalDateTime endAt);
 
-    Object getPageViewStats(Website website,
-                            LocalDateTime startAt,
-                            LocalDateTime endAt,
-                            String timezone,
-                            DateFormatUnit unit,
-                            String url);
+    List<PageViewStats> getPageViewStats(Website website,
+                          LocalDateTime startAt,
+                          LocalDateTime endAt,
+                          String timezone,
+                          DateFormatUnit unit,
+                          String countColumns,
+                          String url);
 
     /**
      * Date format unit.
@@ -66,6 +70,12 @@ public interface ComplexRepository {
      */
     @Data
     class PageViewStats {
+
+        @JsonProperty("t")
+        private LocalDate createdAt;
+
+        @JsonProperty("y")
+        private Long pageViews;
 
     }
 }

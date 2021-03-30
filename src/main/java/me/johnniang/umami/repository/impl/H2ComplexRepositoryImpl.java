@@ -3,11 +3,15 @@ package me.johnniang.umami.repository.impl;
 import lombok.extern.slf4j.Slf4j;
 import me.johnniang.umami.entity.Website;
 import me.johnniang.umami.repository.ComplexRepository;
-import org.hibernate.Session;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import static me.johnniang.umami.repository.ComplexRepository.DateFormatUnit.*;
 
@@ -22,10 +26,12 @@ public class H2ComplexRepositoryImpl implements ComplexRepository {
     private static final Map<DateFormatUnit, String> DATE_FORMATS = Map.of(
             MINUTE, "yyyy-MM-dd HH:mm:00",
             HOUR, "yyyy-MM-dd HH:00:00",
-            DAY, "yyyy-MM-dd",
-            MONTH, "yyyy-MM-01",
-            YEAR, "yyyy-01-01"
+            DAY, "yyyy-MM-dd 00:00:00",
+            MONTH, "yyyy-MM-01 00:00:00",
+            YEAR, "yyyy-01-01 00:00:00"
     );
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final EntityManager entityManager;
 
@@ -33,26 +39,22 @@ public class H2ComplexRepositoryImpl implements ComplexRepository {
         this.entityManager = entityManager;
     }
 
-    private Session getSession() {
-        return entityManager.unwrap(Session.class);
-    }
-
     @Override
     public WebsiteStats getWebsiteStats(Website website, LocalDateTime startAt, LocalDateTime endAt) {
-        Object[] stats = (Object[]) getSession().createNativeQuery("\n" +
+        Object[] stats = (Object[]) entityManager.createNativeQuery("\n" +
                 "select sum(t.c) as pageViews,\n" +
                 "   count(distinct t.sessionId) as uniques,\n" +
                 "   sum(case when t.c = 1 then 1 else 0 end) as bounces,\n" +
                 "   sum(t.time) as totalTime\n" +
                 "from (\n" +
                 "   select session_id as sessionId,\n" +
-                "       formatdatetime(created_at, '" + DATE_FORMATS.get(HOUR) + "') as hours,\n" +
+                "       " + getDateQuery("created_at", HOUR, null) + " as hours,\n" +
                 "       count(*) as c,\n" +
-                "       datediff('SECOND', min(created_at), max(created_at)) as time\n" +
+                "       " + getTimestampIntervalQuery("created_at") + " as time\n" +
                 "   from pageview\n" +
                 "   where website_id = :websiteId\n" +
-                "   and created_at between :lowerTimeLimit and :upperTimeLimit\n" +
-                "   group by sessionId, hours\n" +
+                "       and created_at between :lowerTimeLimit and :upperTimeLimit\n" +
+                "       group by sessionId, hours\n" +
                 ") as t" +
                 "\n")
                 .setParameter("websiteId", website.getId())
@@ -69,7 +71,47 @@ public class H2ComplexRepositoryImpl implements ComplexRepository {
     }
 
     @Override
-    public Object getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String url) {
-        return null;
+    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countColumns, String url) {
+        TimeZone tz = TimeZone.getTimeZone(timezone);
+        if (!StringUtils.hasText(countColumns)) {
+            countColumns = "*";
+        }
+        List<?> stats = entityManager.createNativeQuery("" +
+                "select " + getDateQuery("created_at", unit, tz) + " as t,\n" +
+                "   count(" + countColumns + ") as y\n" +
+                "from pageview\n" +
+                "where website_id = :websiteId\n" +
+                "   and created_at between :lowerTimeLimit and :upperTimeLimit\n" +
+                "   group by t\n" +
+                "   order by t\n" +
+                "\n")
+                .setParameter("websiteId", website.getId())
+                .setParameter("lowerTimeLimit", startAt)
+                .setParameter("upperTimeLimit", endAt)
+                .getResultList();
+
+        return stats.stream().map(stat -> {
+            Object[] statArr = (Object[]) stat;
+            PageViewStats pageViewStats = new PageViewStats();
+            pageViewStats.setCreatedAt(LocalDateTime.parse(statArr[0].toString(), DATE_TIME_FORMATTER).toLocalDate());
+            pageViewStats.setPageViews(((Number) statArr[1]).longValue());
+            return pageViewStats;
+        }).collect(Collectors.toList());
+    }
+
+    protected String getDateQuery(String field, DateFormatUnit unit, TimeZone timeZone) {
+        StringBuilder sb = new StringBuilder("formatdatetime");
+        sb.append('(').append(field);
+        sb.append(',').append('\'').append(DATE_FORMATS.get(unit)).append('\'');
+        if (timeZone != null) {
+            sb.append(',').append('\'').append("en").append('\'');
+            sb.append(',').append('\'').append(timeZone.getID()).append('\'');
+        }
+        sb.append(')');
+        return sb.toString();
+    }
+
+    protected String getTimestampIntervalQuery(String field) {
+        return "datediff('SECOND', min(" + field + "),max(" + field + "))";
     }
 }

@@ -5,6 +5,7 @@ import me.johnniang.umami.repository.ComplexRepository;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static me.johnniang.umami.repository.ComplexRepository.DateFormatUnit.*;
@@ -32,7 +33,7 @@ public class MySQLComplexRepositoryImpl implements ComplexRepository {
     }
 
     @Override
-    public Object getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String url) {
+    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countColumns, String url) {
         return null;
     }
 

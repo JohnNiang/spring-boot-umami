@@ -3,12 +3,12 @@ package me.johnniang.umami.repository.impl;
 import lombok.extern.slf4j.Slf4j;
 import me.johnniang.umami.entity.Website;
 import me.johnniang.umami.repository.ComplexRepository;
-import org.hibernate.Session;
 import org.hibernate.cfg.AvailableSettings;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Repository
@@ -35,8 +35,8 @@ public class ComplexRepositoryImpl implements ComplexRepository {
     }
 
     @Override
-    public Object getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String url) {
-        return null;
+    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countColumns, String url) {
+        return delegate.getPageViewStats(website, startAt, endAt, timezone, unit, countColumns, url);
     }
 
 }
