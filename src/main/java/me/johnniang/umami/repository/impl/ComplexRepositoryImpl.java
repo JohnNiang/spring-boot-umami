@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Repository
@@ -35,8 +36,13 @@ public class ComplexRepositoryImpl implements ComplexRepository {
     }
 
     @Override
-    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countColumns, String url) {
-        return delegate.getPageViewStats(website, startAt, endAt, timezone, unit, countColumns, url);
+    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countFields, String url) {
+        return delegate.getPageViewStats(website, startAt, endAt, timezone, unit, countFields, url);
+    }
+
+    @Override
+    public List<Metrics> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
+        return delegate.getSessionMetrics(website, startAt, endAt, field, filter);
     }
 
 }

@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Complex repository.
@@ -19,12 +20,16 @@ public interface ComplexRepository {
     WebsiteStats getWebsiteStats(Website website, LocalDateTime startAt, LocalDateTime endAt);
 
     List<PageViewStats> getPageViewStats(Website website,
-                          LocalDateTime startAt,
-                          LocalDateTime endAt,
-                          String timezone,
-                          DateFormatUnit unit,
-                          String countColumns,
-                          String url);
+                                         LocalDateTime startAt,
+                                         LocalDateTime endAt,
+                                         String timezone,
+                                         DateFormatUnit unit,
+                                         String countFields,
+                                         String url);
+
+    default List<Metrics> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
+        throw new UnsupportedOperationException("Not implement");
+    }
 
     /**
      * Date format unit.
@@ -72,10 +77,30 @@ public interface ComplexRepository {
     class PageViewStats {
 
         @JsonProperty("t")
-        private LocalDateTime createdAt;
+        private LocalDateTime dateTime;
 
         @JsonProperty("y")
         private Long pageViews;
 
+    }
+
+    /**
+     * Metrics view.
+     *
+     * @author johnniang
+     */
+    @Data
+    class Metrics {
+
+        private String x;
+
+        private Long y;
+
+        public static Metrics of(String x, Long y) {
+            Metrics metrics = new Metrics();
+            metrics.setX(x);
+            metrics.setY(y);
+            return metrics;
+        }
     }
 }

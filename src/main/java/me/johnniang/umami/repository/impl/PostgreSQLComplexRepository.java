@@ -30,7 +30,7 @@ public class PostgreSQLComplexRepository implements ComplexRepository {
     }
 
     @Override
-    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countColumns, String url) {
+    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countFields, String url) {
         return null;
     }
 }
