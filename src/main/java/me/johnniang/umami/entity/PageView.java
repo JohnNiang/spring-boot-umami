@@ -7,7 +7,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "page_view", indexes = {
+@Table(name = "pageview", indexes = {
         @Index(name = "pageview_created_at_idx", columnList = "created_at"),
         @Index(name = "pageview_website_id_idx", columnList = "website_id"),
         @Index(name = "pageview_session_id_idx", columnList = "session_id"),
@@ -20,12 +20,12 @@ public class PageView {
     @Id
     @Column(name = "view_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Integer id;
 
     @Column(name = "url", length = 500, nullable = false)
     private String url;
 
-    @Column(name = "referer", length = 500)
+    @Column(name = "referrer", length = 500)
     private String referer;
 
     @Column(name = "created_at")
