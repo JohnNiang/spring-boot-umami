@@ -2,6 +2,8 @@ package me.johnniang.umami.repository;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import me.johnniang.umami.entity.Website;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -10,6 +12,7 @@ import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Complex repository.
@@ -32,7 +35,20 @@ public interface ComplexRepository {
         throw new UnsupportedOperationException("Not implement");
     }
 
-    default List<Metric> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
+    default List<Metric> getSessionMetrics(Website website,
+                                           LocalDateTime startAt,
+                                           LocalDateTime endAt,
+                                           String field,
+                                           Map<String, Object> filter) {
+        throw new UnsupportedOperationException("Not implement");
+    }
+
+    default List<EventMetric> getEventMetrics(Website website,
+                                              LocalDateTime startAt,
+                                              LocalDateTime endAt,
+                                              TimeZone timeZone,
+                                              DateFormatUnit unit,
+                                              Object filter) {
         throw new UnsupportedOperationException("Not implement");
     }
 
@@ -125,5 +141,14 @@ public interface ComplexRepository {
             metric.setY(y);
             return metric;
         }
+    }
+
+    @Data
+    @ToString(callSuper = true)
+    @EqualsAndHashCode(callSuper = true)
+    class EventMetric extends Metric {
+
+        private LocalDateTime t;
+
     }
 }

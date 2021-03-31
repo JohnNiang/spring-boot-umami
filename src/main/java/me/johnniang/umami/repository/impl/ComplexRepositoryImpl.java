@@ -13,6 +13,7 @@ import javax.persistence.criteria.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -80,6 +81,11 @@ public class ComplexRepositoryImpl implements ComplexRepository {
             metric.setY(((Number) rawMetricArr[1]).longValue());
             return metric;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventMetric> getEventMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, TimeZone timeZone, DateFormatUnit unit, Object filter) {
+        return delegate.getEventMetrics(website, startAt, endAt, timeZone, unit, filter);
     }
 
     @Override

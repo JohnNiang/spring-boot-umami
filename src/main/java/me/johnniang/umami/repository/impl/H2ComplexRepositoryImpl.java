@@ -76,8 +76,7 @@ public class H2ComplexRepositoryImpl implements ComplexRepository {
         if (!StringUtils.hasText(countFields)) {
             countFields = "*";
         }
-        StringBuilder nativeSql = new StringBuilder().append("")
-                .append("select ").append(getDateQuery("created_at", unit, tz)).append(" as t,\n")
+        StringBuilder nativeSql = new StringBuilder("select ").append(getDateQuery("created_at", unit, tz)).append(" as t,\n")
                 .append("   count(").append(countFields).append(") as y\n")
                 .append("from pageview\n")
                 .append("where website_id = :websiteId\n")
@@ -100,6 +99,60 @@ public class H2ComplexRepositoryImpl implements ComplexRepository {
             pageViewStats.setDateTime(LocalDateTime.parse(statArr[0].toString(), DATE_TIME_FORMATTER));
             pageViewStats.setPageViews(((Number) statArr[1]).longValue());
             return pageViewStats;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventMetric> getEventMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, TimeZone timeZone, DateFormatUnit unit, Object filter) {
+        if (timeZone == null) {
+            timeZone = TimeZone.getDefault();
+        }
+//        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+//        CriteriaQuery<Tuple> query = cb.createQuery(Tuple.class);
+//        Root<Event> root = query.from(Event.class);
+//        Path<Object> eventValuePath = root.get("eventValue");
+//        Expression<LocalDateTime> formattedCreatedAtPath = cb.function("formatdatetime", LocalDateTime.class, root.get("createdAt"), cb.literal(DATE_FORMATS.get(unit)), cb.literal("en"), cb.literal(timeZone.getID()));
+//        Expression<Long> countPath = cb.count(cb.literal("*"));
+//        query.multiselect(eventValuePath.alias("x"), formattedCreatedAtPath.alias("t"), countPath.alias("y"));
+//        query.where(
+//                cb.equal(root.get("website"), website),
+//                cb.between(root.get("createdAt"), startAt, endAt)
+//        );
+//
+//        query.getSelection();
+//
+//        query.groupBy(eventValuePath, formattedCreatedAtPath)
+//                .orderBy(cb.asc(formattedCreatedAtPath));
+        // handle for filter
+
+        final var nativeSql = new StringBuilder("select event_value x,").append('\n')
+                .append("   ").append(getDateQuery("created_at", unit, timeZone)).append(" as t,").append('\n')
+                .append("   count(*) y").append('\n')
+                .append("from event").append('\n')
+                .append("where website_id = :websiteId").append('\n')
+                .append("   and created_at between :lowerTimeLimit and :upperTimeLimit").append('\n')
+                .append("group by x, t").append('\n')
+                .append("order by t");
+
+        List<?> rawMetrics = entityManager.createNativeQuery(nativeSql.toString())
+                .setParameter("websiteId", website.getId())
+                .setParameter("lowerTimeLimit", startAt)
+                .setParameter("upperTimeLimit", endAt)
+                .getResultList();
+
+        return rawMetrics.stream().map(rawMetric -> {
+            Object[] metric = (Object[]) rawMetric;
+            EventMetric eventMetric = new EventMetric();
+            if (metric[0] != null) {
+                eventMetric.setX(metric[0].toString());
+            }
+            if (metric[1] != null) {
+                eventMetric.setT(LocalDateTime.parse(metric[1].toString(), DATE_TIME_FORMATTER));
+            }
+            if (metric[2] != null) {
+                eventMetric.setY(((Number) metric[2]).longValue());
+            }
+            return eventMetric;
         }).collect(Collectors.toList());
     }
 

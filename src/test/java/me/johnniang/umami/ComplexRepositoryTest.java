@@ -1,11 +1,11 @@
 package me.johnniang.umami;
 
 import lombok.extern.slf4j.Slf4j;
-import me.johnniang.umami.entity.PageView;
-import me.johnniang.umami.entity.Session;
-import me.johnniang.umami.entity.Website;
+import me.johnniang.umami.entity.*;
 import me.johnniang.umami.repository.ComplexRepository;
+import me.johnniang.umami.repository.ComplexRepository.EventMetric;
 import me.johnniang.umami.repository.ComplexRepository.Metric;
+import me.johnniang.umami.repository.EventRepository;
 import me.johnniang.umami.repository.PageViewRepository;
 import me.johnniang.umami.repository.SessionRepository;
 import me.johnniang.umami.repository.impl.ComplexRepositoryImpl;
@@ -16,18 +16,22 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Tuple;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.time.LocalTime;
 import java.util.List;
-import java.util.Random;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static me.johnniang.umami.repository.ComplexRepository.DateFormatUnit.DAY;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static me.johnniang.umami.repository.ComplexRepository.DateFormatUnit.HOUR;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Spring data jpa loading test.
@@ -51,6 +55,9 @@ class ComplexRepositoryTest {
 
     @Autowired
     PageViewRepository pageViewRepository;
+
+    @Autowired
+    EventRepository eventRepository;
 
     @Test
     void contextLoad() {
@@ -190,11 +197,10 @@ class ComplexRepositoryTest {
 
     @Test
     void getActiveVisitorsWithVisiting() {
-        final var random = new Random();
         final var website = new Website();
         website.setId(1);
         // simulate visiting
-        List<Session> sessions = random.ints(20).mapToObj(i -> {
+        List<Session> sessions = IntStream.range(0, 3).mapToObj(i -> {
             Session session = new Session();
             session.setUuid(UUID.randomUUID().toString());
             session.setWebsite(website);
@@ -202,7 +208,7 @@ class ComplexRepositoryTest {
         }).collect(Collectors.toList());
         sessionRepository.saveAll(sessions);
 
-        List<PageView> pageViews = sessions.stream().flatMap(session -> random.ints(10).mapToObj(i -> {
+        List<PageView> pageViews = sessions.stream().flatMap(session -> IntStream.range(0, 5).mapToObj(i -> {
             PageView pageView = new PageView();
             pageView.setWebsite(website);
             pageView.setSession(session);
@@ -216,4 +222,53 @@ class ComplexRepositoryTest {
         Long activeVisitors = complexRepository.getActiveVisitors(website);
         assertEquals(sessions.size(), activeVisitors);
     }
+
+    @Test
+    void getEventMetricsWithoutTrigger() {
+        Website website = new Website();
+        website.setId(1);
+        LocalDateTime startAt = LocalDateTime.of(2021, 3, 28, 0, 0, 0);
+        LocalDateTime endAt = startAt.plusDays(2);
+
+        List<EventMetric> eventMetrics = complexRepository.getEventMetrics(website, startAt, endAt, TimeZone.getTimeZone("UTC"), HOUR, null);
+        assertTrue(eventMetrics.isEmpty());
+    }
+
+    @Test
+    void getEventMetricsWithTrigger() {
+        Website website = new Website();
+        website.setId(1);
+
+        // simulate visiting
+        List<Session> sessions = IntStream.range(0, 3).mapToObj(i -> {
+            Session session = new Session();
+            session.setUuid(UUID.randomUUID().toString());
+            session.setWebsite(website);
+            return session;
+        }).collect(Collectors.toList());
+        sessionRepository.saveAll(sessions);
+
+        List<Event> events = sessions.stream().flatMap(session -> IntStream.range(0, 5).mapToObj(i -> {
+            Event event = new Event();
+            event.setWebsite(website);
+            event.setSession(session);
+            event.setUrl("test-url");
+            event.setEventType("test-event-type");
+            event.setEventValue("test-event-value");
+            return event;
+        })).collect(Collectors.toList());
+        eventRepository.saveAll(events);
+
+        // simulate visiting end
+
+        LocalDateTime endAt = LocalDateTime.now();
+        LocalDateTime startAt = endAt.minusMinutes(5);
+        List<EventMetric> eventMetrics = complexRepository.getEventMetrics(website, startAt, endAt, TimeZone.getTimeZone("UTC"), DAY, null);
+        EventMetric expectEventMetric = new EventMetric();
+        expectEventMetric.setX("test-event-value");
+        expectEventMetric.setY((long) events.size());
+        expectEventMetric.setT(LocalDateTime.of(endAt.toLocalDate(), LocalTime.MIDNIGHT));
+        assertEquals(List.of(expectEventMetric), eventMetrics);
+    }
+
 }
