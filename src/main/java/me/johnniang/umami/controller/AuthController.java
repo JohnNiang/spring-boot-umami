@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -36,17 +37,18 @@ class AuthController {
     }
 
     @RequestMapping("/login")
-    AccessToken login(@RequestBody @Validated AuthRequest auth, HttpServletResponse response) {
+    AccessToken login(@RequestBody @Validated AuthRequest auth, HttpServletRequest request, HttpServletResponse response) {
         return accountRepository.findByUsername(auth.getUsername()).flatMap(account -> {
             // validate password
-            BCrypt.Result verified = BCrypt.verifyer().verify(auth.getPassword().getBytes(StandardCharsets.UTF_8), account.getPassword().getBytes(StandardCharsets.UTF_8));
+            var verified = BCrypt.verifyer().verify(auth.getPassword().getBytes(StandardCharsets.UTF_8), account.getPassword().getBytes(StandardCharsets.UTF_8));
             if (!verified.verified) {
                 return Optional.empty();
             }
             // build access token
-            String token = UUID.randomUUID().toString();
-            Duration timeout = Duration.ofDays(30);
+            var token = UUID.randomUUID().toString();
+            var timeout = Duration.ofDays(30);
             cache.put(token, account, timeout);
+
             return Optional.of(new AccessToken(token, Instant.now().plus(timeout)));
         }).orElseThrow(() -> {
             throw new IllegalArgumentException("Username was not found or password was incorrect!");
@@ -55,7 +57,9 @@ class AuthController {
 
     @RequestMapping("/logout")
     void logout() {
+        // get token from header
         //TODO Handle logout
+        cache.revoke("");
     }
 
     @RequestMapping("/verify")

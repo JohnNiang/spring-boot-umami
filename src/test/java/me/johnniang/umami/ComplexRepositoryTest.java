@@ -260,13 +260,13 @@ class ComplexRepositoryTest {
 
         // simulate visiting end
 
-        LocalDateTime endAt = LocalDateTime.now();
+        LocalDateTime endAt = events.get(events.size() - 1).getCreatedAt();
         LocalDateTime startAt = endAt.minusMinutes(5);
-        List<EventMetric> eventMetrics = complexRepository.getEventMetrics(website, startAt, endAt, TimeZone.getTimeZone("UTC"), DAY, null);
+        List<EventMetric> eventMetrics = complexRepository.getEventMetrics(website, startAt, endAt, TimeZone.getTimeZone("CST"), DAY, null);
         EventMetric expectEventMetric = new EventMetric();
         expectEventMetric.setX("test-event-value");
         expectEventMetric.setY((long) events.size());
-        expectEventMetric.setT(LocalDateTime.of(endAt.toLocalDate(), LocalTime.MIDNIGHT));
+        expectEventMetric.setT(LocalDateTime.of(endAt.toLocalDate(), LocalTime.MIN));
         assertEquals(List.of(expectEventMetric), eventMetrics);
     }
 

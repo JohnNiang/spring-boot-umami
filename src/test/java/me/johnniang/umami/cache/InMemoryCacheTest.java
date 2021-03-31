@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,8 +18,9 @@ class InMemoryCacheTest {
     }
 
     @Test
-    void put() {
+    void put() throws InterruptedException {
         cache.put("test", "value", Duration.ZERO);
+        TimeUnit.MILLISECONDS.sleep(1100);
         assertTrue(cache.get("test", String.class).isEmpty());
 
         cache.put("test", "value", Duration.ofSeconds(1));

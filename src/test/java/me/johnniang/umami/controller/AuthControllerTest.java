@@ -12,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.servlet.http.Cookie;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -43,6 +45,7 @@ class AuthControllerTest {
         authRequest.setUsername("admin");
         authRequest.setPassword("umami");
         mvc.perform(post("/api/auth/login")
+                .cookie(new Cookie("token", "real-token"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(authRequestJson.write(authRequest).getJson()))
                 .andDo(print())

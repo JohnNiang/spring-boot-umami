@@ -25,7 +25,11 @@ public class InMemoryCache implements Cache {
     public void put(String key, Object value, Duration timeout) {
         Assert.notNull(key, "Cache key must not be null");
         Assert.notNull(value, "Cache value must not be null");
-        if (timeout == null || timeout.isZero() || timeout.isNegative()) {
+        if (timeout != null && timeout.isZero()) {
+            // do nothing
+            return;
+        }
+        if (timeout == null || timeout.isNegative()) {
             // default timeout is 356 days
             timeout = Duration.ofDays(365);
         }
