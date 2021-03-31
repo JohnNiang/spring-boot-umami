@@ -2,6 +2,8 @@ package me.johnniang.umami.model;
 
 import lombok.Data;
 
+import java.time.Instant;
+
 /**
  * Access token.
  *
@@ -10,10 +12,13 @@ import lombok.Data;
 @Data
 public class AccessToken {
 
-    public AccessToken(String token) {
-        this.token = token;
-    }
-
     private String token;
+
+    private Long exp;
+
+    public AccessToken(String token, Instant expirationTime) {
+        this.token = token;
+        this.exp = expirationTime.toEpochMilli() / 1000;
+    }
 
 }

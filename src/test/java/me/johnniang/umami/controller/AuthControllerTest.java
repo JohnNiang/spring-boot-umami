@@ -40,11 +40,14 @@ class AuthControllerTest {
     @Test
     void shouldResponseCorrectToken() throws Exception {
         AuthRequest authRequest = new AuthRequest();
+        authRequest.setUsername("admin");
+        authRequest.setPassword("umami");
         mvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(authRequestJson.write(authRequest).getJson()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt token"));
+                .andExpect(jsonPath("$.token").exists())
+                .andExpect(jsonPath("$.exp").exists());
     }
 }

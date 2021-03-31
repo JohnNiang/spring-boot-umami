@@ -1,7 +1,10 @@
 package me.johnniang.umami;
 
 import lombok.extern.slf4j.Slf4j;
-import me.johnniang.umami.entity.*;
+import me.johnniang.umami.entity.Event;
+import me.johnniang.umami.entity.PageView;
+import me.johnniang.umami.entity.Session;
+import me.johnniang.umami.entity.Website;
 import me.johnniang.umami.repository.ComplexRepository;
 import me.johnniang.umami.repository.ComplexRepository.EventMetric;
 import me.johnniang.umami.repository.ComplexRepository.Metric;
@@ -16,11 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Tuple;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
