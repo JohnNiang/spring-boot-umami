@@ -24,13 +24,4 @@ public class PostgreSQLComplexRepository implements ComplexRepository {
             YEAR, "YYYY-01-01"
     );
 
-    @Override
-    public WebsiteStats getWebsiteStats(Website website, LocalDateTime startAt, LocalDateTime endAt) {
-        return null;
-    }
-
-    @Override
-    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countFields, String url) {
-        return null;
-    }
 }

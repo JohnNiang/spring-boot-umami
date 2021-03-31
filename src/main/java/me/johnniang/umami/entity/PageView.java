@@ -26,7 +26,7 @@ public class PageView {
     private String url;
 
     @Column(name = "referrer", length = 500)
-    private String referer;
+    private String referrer;
 
     @Column(name = "created_at")
     @CreationTimestamp

@@ -3,7 +3,6 @@ package me.johnniang.umami.repository.impl;
 import lombok.extern.slf4j.Slf4j;
 import me.johnniang.umami.entity.Website;
 import me.johnniang.umami.repository.ComplexRepository;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
@@ -101,43 +100,6 @@ public class H2ComplexRepositoryImpl implements ComplexRepository {
             pageViewStats.setDateTime(LocalDateTime.parse(statArr[0].toString(), DATE_TIME_FORMATTER));
             pageViewStats.setPageViews(((Number) statArr[1]).longValue());
             return pageViewStats;
-        }).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<Metrics> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
-        var hql = new StringBuilder("select ").append(field).append(" as x").append(", count(*) as y").append('\n')
-                .append("from Session").append('\n')
-                .append("where id in").append('\n')
-                .append("(")
-                .append("   select session").append('\n')
-                .append("   from PageView").append('\n')
-                .append("   where website=:website").append('\n')
-                .append("   and createdAt between :lowerTimeLimit and :upperTimeLimit").append('\n');
-
-        if (!CollectionUtils.isEmpty(filter)) {
-            filter.forEach((filterField, filterValue) -> {
-                hql.append("and ").append(filterField).append("='").append(filterValue).append("'").append("\n");
-            });
-        }
-        hql.append(")").append('\n');
-        hql.append("group by x").append('\n');
-        hql.append("order by y desc").append('\n');
-
-        List<?> rawMetrics = entityManager.createQuery(hql.toString())
-                .setParameter("website", website)
-                .setParameter("lowerTimeLimit", startAt)
-                .setParameter("upperTimeLimit", endAt)
-                .getResultList();
-
-        return rawMetrics.stream().map(rawMetric -> {
-            var rawMetricArr = (Object[]) rawMetric;
-            var metrics = new Metrics();
-            if (rawMetricArr[0] != null) {
-                metrics.setX(rawMetricArr[0].toString());
-            }
-            metrics.setY(((Number) rawMetricArr[1]).longValue());
-            return metrics;
         }).collect(Collectors.toList());
     }
 

@@ -1,6 +1,8 @@
 package me.johnniang.umami.repository.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import me.johnniang.umami.entity.PageView;
+import me.johnniang.umami.entity.Session;
 import me.johnniang.umami.entity.Website;
 import me.johnniang.umami.repository.ComplexRepository;
 import org.hibernate.cfg.AvailableSettings;
@@ -46,14 +48,44 @@ public class ComplexRepositoryImpl implements ComplexRepository {
     }
 
     @Override
-    public List<Metrics> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
-        return delegate.getSessionMetrics(website, startAt, endAt, field, filter);
+    public List<Metric> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
+        final var cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Object> query = cb.createQuery();
+        Root<Session> root = query.from(Session.class);
+        Path<Object> fieldPath = root.get(field);
+        Expression<Long> countPath = cb.count(cb.literal("*"));
+        query.multiselect(fieldPath, countPath);
+
+        // sub query
+        Subquery<Session> subQuery = query.subquery(Session.class);
+        Root<PageView> subRoot = subQuery.from(PageView.class);
+        subQuery.select(subRoot.get("session"))
+                .where(
+                        cb.equal(subRoot.get("website"), website),
+                        cb.between(subRoot.get("createdAt"), startAt, endAt)
+                );
+        // sub query end
+
+        query.where(root.get("id").in(subQuery))
+                .groupBy(fieldPath)
+                .orderBy(cb.desc(countPath));
+
+        List<Object> rawMetrics = entityManager.createQuery(query).getResultList();
+        return rawMetrics.stream().map(rawMetric -> {
+            Object[] rawMetricArr = (Object[]) rawMetric;
+            Metric metric = new Metric();
+            if (rawMetricArr[0] != null) {
+                metric.setX(rawMetricArr[0].toString());
+            }
+            metric.setY(((Number) rawMetricArr[1]).longValue());
+            return metric;
+        }).collect(Collectors.toList());
     }
 
     @Override
-    public List<Metrics> getPageMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, Class<?> entityClass, String field, Map<String, Object> filter) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Object> query = cb.createQuery();
+    public List<Metric> getMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, Class<?> entityClass, String field, QueryFilter filter) {
+        final var cb = entityManager.getCriteriaBuilder();
+        final var query = cb.createQuery();
         Root<?> root = query.from(entityClass);
         Expression<Long> count = cb.count(cb.literal("*"));
         Path<Object> fieldPath = root.get(field);
@@ -61,20 +93,25 @@ public class ComplexRepositoryImpl implements ComplexRepository {
         query.groupBy(fieldPath);
         query.orderBy(cb.desc(count));
 
+        Predicate filterPredicate = cb.isTrue(cb.literal(true));
+        if (filter != null) {
+            filterPredicate = cb.and(filterPredicate, filter.build(root, cb));
+        }
         query.where(
                 cb.equal(root.get("website"), website),
-                cb.between(root.get("createdAt"), startAt, endAt)
+                cb.between(root.get("createdAt"), startAt, endAt),
+                filterPredicate
         );
 
         List<Object> rawMetrics = entityManager.createQuery(query).getResultList();
         return rawMetrics.stream().map(rawMetric -> {
             Object[] rawMetricArr = (Object[]) rawMetric;
-            Metrics metrics = new Metrics();
+            Metric metric = new Metric();
             if (rawMetricArr[0] != null) {
-                metrics.setX(rawMetricArr[0].toString());
+                metric.setX(rawMetricArr[0].toString());
             }
-            metrics.setY(((Number) rawMetricArr[1]).longValue());
-            return metrics;
+            metric.setY(((Number) rawMetricArr[1]).longValue());
+            return metric;
         }).collect(Collectors.toList());
     }
 

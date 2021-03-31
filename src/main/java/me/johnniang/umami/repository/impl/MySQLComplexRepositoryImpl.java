@@ -26,15 +26,4 @@ public class MySQLComplexRepositoryImpl implements ComplexRepository {
         this.entityManager = entityManager;
     }
 
-    @Override
-    public WebsiteStats getWebsiteStats(Website website, LocalDateTime startAt, LocalDateTime endAt) {
-
-        return null;
-    }
-
-    @Override
-    public List<PageViewStats> getPageViewStats(Website website, LocalDateTime startAt, LocalDateTime endAt, String timezone, DateFormatUnit unit, String countFields, String url) {
-        return null;
-    }
-
 }

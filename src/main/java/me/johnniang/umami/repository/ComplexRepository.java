@@ -18,25 +18,35 @@ import java.util.Map;
  */
 public interface ComplexRepository {
 
-    WebsiteStats getWebsiteStats(Website website, LocalDateTime startAt, LocalDateTime endAt);
-
-    List<PageViewStats> getPageViewStats(Website website,
-                                         LocalDateTime startAt,
-                                         LocalDateTime endAt,
-                                         String timezone,
-                                         DateFormatUnit unit,
-                                         String countFields,
-                                         String url);
-
-    default List<Metrics> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
+    default WebsiteStats getWebsiteStats(Website website, LocalDateTime startAt, LocalDateTime endAt) {
         throw new UnsupportedOperationException("Not implement");
     }
 
-    default List<Metrics> getPageMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, Class<?> entityClass, String field, Map<String, Object> filter) {
+    default List<PageViewStats> getPageViewStats(Website website,
+                                                 LocalDateTime startAt,
+                                                 LocalDateTime endAt,
+                                                 String timezone,
+                                                 DateFormatUnit unit,
+                                                 String countFields,
+                                                 String url) {
         throw new UnsupportedOperationException("Not implement");
     }
 
+    default List<Metric> getSessionMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, String field, Map<String, Object> filter) {
+        throw new UnsupportedOperationException("Not implement");
+    }
+
+    default List<Metric> getMetrics(Website website, LocalDateTime startAt, LocalDateTime endAt, Class<?> entityClass, String field, QueryFilter filter) {
+        throw new UnsupportedOperationException("Not implement");
+    }
+
+    /**
+     * Query filter.
+     *
+     * @author johnniang
+     */
     interface QueryFilter {
+
         Predicate build(Root<?> root, CriteriaBuilder cb);
     }
 
@@ -99,17 +109,17 @@ public interface ComplexRepository {
      * @author johnniang
      */
     @Data
-    class Metrics {
+    class Metric {
 
         private String x;
 
         private Long y;
 
-        public static Metrics of(String x, Long y) {
-            Metrics metrics = new Metrics();
-            metrics.setX(x);
-            metrics.setY(y);
-            return metrics;
+        public static Metric of(String x, Long y) {
+            Metric metric = new Metric();
+            metric.setX(x);
+            metric.setY(y);
+            return metric;
         }
     }
 }
