@@ -40,6 +40,10 @@ public interface ComplexRepository {
         throw new UnsupportedOperationException("Not implement");
     }
 
+    default Long getActiveVisitors(Website website) {
+        throw new UnsupportedOperationException("Not implement");
+    }
+
     /**
      * Query filter.
      *

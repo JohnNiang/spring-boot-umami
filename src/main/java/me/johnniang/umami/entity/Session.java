@@ -20,7 +20,7 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "session_uuid", length = 36, unique = true)
+    @Column(name = "session_uuid", length = 36, unique = true, nullable = false)
     private String uuid;
 
     @Column(name = "hostname", length = 100)

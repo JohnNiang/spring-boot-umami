@@ -115,4 +115,18 @@ public class ComplexRepositoryImpl implements ComplexRepository {
         }).collect(Collectors.toList());
     }
 
+    @Override
+    public Long getActiveVisitors(Website website) {
+        final var cb = entityManager.getCriteriaBuilder();
+        final var query = cb.createQuery();
+        Root<PageView> root = query.from(PageView.class);
+        query.select(cb.countDistinct(root.get("session")));
+        query.where(
+                cb.equal(root.get("website"), website),
+                cb.greaterThanOrEqualTo(root.get("createdAt"), LocalDateTime.now().minusMinutes(5))
+        );
+        Object rawActiveVisitors = entityManager.createQuery(query).getSingleResult();
+        return ((Number) rawActiveVisitors).longValue();
+    }
+
 }

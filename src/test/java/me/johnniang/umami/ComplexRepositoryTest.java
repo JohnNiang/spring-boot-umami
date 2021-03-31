@@ -2,9 +2,12 @@ package me.johnniang.umami;
 
 import lombok.extern.slf4j.Slf4j;
 import me.johnniang.umami.entity.PageView;
+import me.johnniang.umami.entity.Session;
 import me.johnniang.umami.entity.Website;
 import me.johnniang.umami.repository.ComplexRepository;
 import me.johnniang.umami.repository.ComplexRepository.Metric;
+import me.johnniang.umami.repository.PageViewRepository;
+import me.johnniang.umami.repository.SessionRepository;
 import me.johnniang.umami.repository.impl.ComplexRepositoryImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +16,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static me.johnniang.umami.repository.ComplexRepository.DateFormatUnit.DAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,6 +45,12 @@ class ComplexRepositoryTest {
 
     @Autowired
     ComplexRepository complexRepository;
+
+    @Autowired
+    SessionRepository sessionRepository;
+
+    @Autowired
+    PageViewRepository pageViewRepository;
 
     @Test
     void contextLoad() {
@@ -167,14 +180,40 @@ class ComplexRepositoryTest {
     }
 
     @Test
-    void criteriaBuilderTest() {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+    void getActiveVisitorsWithoutVisiting() {
+        Website website = new Website();
+        website.setId(1);
+
+        Long activeVisitors = complexRepository.getActiveVisitors(website);
+        assertEquals(0L, activeVisitors);
     }
 
     @Test
-    void buildQueryFilterTest() {
-        ComplexRepository.QueryFilter queryFilter = (root, cb) -> {
-            return cb.like(root.get("referrer"), "");
-        };
+    void getActiveVisitorsWithVisiting() {
+        final var random = new Random();
+        final var website = new Website();
+        website.setId(1);
+        // simulate visiting
+        List<Session> sessions = random.ints(20).mapToObj(i -> {
+            Session session = new Session();
+            session.setUuid(UUID.randomUUID().toString());
+            session.setWebsite(website);
+            return session;
+        }).collect(Collectors.toList());
+        sessionRepository.saveAll(sessions);
+
+        List<PageView> pageViews = sessions.stream().flatMap(session -> random.ints(10).mapToObj(i -> {
+            PageView pageView = new PageView();
+            pageView.setWebsite(website);
+            pageView.setSession(session);
+            pageView.setUrl("/test");
+            return pageView;
+        })).collect(Collectors.toList());
+        pageViewRepository.saveAll(pageViews);
+        // simulate visiting end
+
+        // get active visitors
+        Long activeVisitors = complexRepository.getActiveVisitors(website);
+        assertEquals(sessions.size(), activeVisitors);
     }
 }
